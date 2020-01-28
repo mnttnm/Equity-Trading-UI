@@ -11,3 +11,76 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.table {
+  border: solid 1px black;
+  text-align: left;
+  margin: 20px;
+}
+
+th {
+  border-bottom: 1px solid black;
+  padding: 10px;
+  text-align: center;
+}
+
+th.instrument{
+  text-align: left;
+}
+
+td {
+  padding: 10px;
+  text-align: center;
+  border-bottom: 1px solid rgb(160, 157, 157);
+}
+
+td.stock-id {
+  text-align: left;
+}
+
+.badge {
+  text-transform: uppercase;
+  font-weight: bold;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: whitesmoke;
+  border-style: none;
+  border-radius: 2px;
+}
+
+.btn {
+  cursor: pointer;
+}
+
+.badge.buy {
+  background-color: rgb(49, 49, 230);
+}
+
+.badge.sell{
+  background-color: rgb(201, 61, 19);
+}
+
+#transcation-box{
+  background-color: gainsboro;
+  padding: 20px;
+  width: 300px;
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+}
+
+#transcation-box .details {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.portfolio-heading{
+  margin-left: 20px;
+}
+
+.order-execution-box {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+}
