@@ -1,9 +1,10 @@
-import React, {useContext} from "react";
+import React, {useContext, useEffect, useRef, useState} from "react";
 import { STOCK_ENTRY_TYPE, TRANSACTION_TYPE } from "../constants";
 import TransactionContext from "../context/TransactionContext";
 
 const Stock = ({ stock, entryType }) => {
   const {onTransaction} = useContext(TransactionContext);
+  const [behaviour, setBehaviour] = useState("blue")
   function handleStockTransaction(type, stock, units) {
     console.log(
       "transaction initiated for: ",
@@ -15,11 +16,25 @@ const Stock = ({ stock, entryType }) => {
     );
     onTransaction(type, stock);
   }
+  const prevStateRef = useRef();
+
+  useEffect(() => {
+    if(prevStateRef.current) {
+      console.log('current-value: ', stock.price, ', previous-value: ', prevStateRef.current.price);
+      if(stock.price > prevStateRef.current.price){
+        setBehaviour("green");
+      }
+      if(stock.price < prevStateRef.current.price){
+        setBehaviour("red");
+      }
+    }
+    prevStateRef.current = stock;
+  }, [stock]);
 
   return (
     <tr className="stock-row">
       {Object.keys(stock).map(key => (
-        <td className={`stock-${key}`}>{stock[key]}</td>
+        <td className={`stock-${key} ${behaviour}`} key={`${stock.id}-${stock[key]}`}>{stock[key]}</td>
       ))}
       <td>
         <button

@@ -1,45 +1,71 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import Portfolio from "./Portfolio";
 import StockList from "./StockList";
 import TransactionCart from "./TransactionCart";
-import { getUserPortfolio } from "../api/api";
-import UserBook from "./UserBook";
 import { TransactionContextProvider } from "../context/TransactionContext";
-import { StockExchangeContextProvider } from "../context/StockExchangeContext";
-import {TRANSACTION_STATUS} from '../constants';
+import StockExchangeContext from "../context/StockExchangeContext";
+import { TRANSACTION_STATUS } from "../constants";
+import RefreshTab from "./RefreshTab";
 
-const DashBoard = userID => {
-  const [userPortfolio, setUserPortfolio] = useState({});
+const DashBoard = ({userID}) => {
+  const [stockRefreshFrequency, setStockRequestFrequency] = useState(20000);
+  const [disableTimer, toggleDisableTimer] = useState(false);
+  const {stockListInfo} = useContext(StockExchangeContext);
+  const [isPortfolioChanged, setIsPortfolioChanged] = useState();
+  
+  // useEffect(() => {
+  //   (async () => {
+  //     const userInfo = await getUserPortfolio(userID);
+  //     if (userInfo) {
+  //       setUserPortfolio(userInfo);
+  //     }
+  //   })();
+  // }, [userID]);
+
   useEffect(() => {
-    (async () => {
-      const userInfo = await getUserPortfolio(userID);
-      if (userInfo) {
-        setUserPortfolio(userInfo);
-      }
-    })();
-  }, [userID]);
+    console.log('onStockListUpdate: ', stockListInfo);
+  }, [stockListInfo]);
 
   function onTransactionStatusChanged(status) {
-    console.log('Transaction status: ', status);
-    if(status === TRANSACTION_STATUS.SUCCESSFUL){
-      (async () => {
-        const userInfo = await getUserPortfolio(userID, true);
-        if (userInfo) {
-          setUserPortfolio(userInfo);
-        }
-      })();
+    console.log("Transaction status: ", status);
+    if (status === TRANSACTION_STATUS.SUCCESSFUL) {
+      setIsPortfolioChanged(true);
+      // (async () => {
+      //   const userInfo = await getUserPortfolio(userID, true);
+      //   if (userInfo) {
+      //     setUserPortfolio(userInfo);
+      //   }
+      // })();
     }
-  };
+  }
+
+  function onRefreshIntervalChanged(interval) {
+    console.log("refresh interval changed to: ", interval);
+    setStockRequestFrequency(interval * 1000);
+  }
+
+  function onStockListUpdate(state, status){
+  }
 
   return (
     <>
-      <UserBook userBalance={userPortfolio.cash} />
+      <button onClick={() => {
+          toggleDisableTimer(!disableTimer);
+        }
+        }>
+        Disable Timer
+      </button>
+      <RefreshTab onRefreshIntervalChanged={onRefreshIntervalChanged} timerDisabled={disableTimer}/>
       <TransactionContextProvider>
-        <StockExchangeContextProvider>
-          <StockList />
-          <Portfolio userPortfolio={userPortfolio} />
-          <TransactionCart onTransactionStatusChanged={onTransactionStatusChanged}/>
-        </StockExchangeContextProvider>
+          <StockList
+            onStockListUpdate={onStockListUpdate}
+            refreshFrequency={stockRefreshFrequency}
+            disableTimer={disableTimer}
+          />
+          <Portfolio userID={userID} isPortfolioChanged={isPortfolioChanged}/>
+          <TransactionCart
+            onTransactionStatusChanged={onTransactionStatusChanged}
+          />
       </TransactionContextProvider>
     </>
   );

@@ -16,3 +16,15 @@ export const TRANSACTION_STATUS = {
   FAILED: "failed",
   NONE: "none"
 }
+
+export const STOCKLIST_STATE = {
+  LOADING : "loading",
+  LOADED: "loaded",
+  STALE: "stale"
+}
+
+export const STOCKLIST_STATUS = {
+  FETCH_FAILED: "stock_list_fetch_failure",
+  FETCH_SUCCESSFUL: "stock_list_fetch_successful",
+  UNKNOWN: "unknown"
+}

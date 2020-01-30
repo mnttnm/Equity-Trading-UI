@@ -15,7 +15,6 @@ code {
 .table {
   border: solid 1px black;
   text-align: left;
-  margin: 20px;
 }
 
 th {
@@ -75,12 +74,44 @@ td.stock-id {
   margin-bottom: 20px;
 }
 
-.portfolio-heading{
+/* .portfolio-heading{
   margin-left: 20px;
 }
+
+.stocklist-heading {
+  margin-left: 20px;
+} */
 
 .order-execution-box {
   position: absolute;
   bottom: 10px;
   right: 10px;
+}
+
+.refresh-tab{
+  display: flex;
+}
+
+.refresh-interval-btn:focus{
+  background-color: blue;
+}
+
+.refresh-interval-value {
+  width:fit-content;
+  border: 1px solid black;
+  padding: 0 5px;
+  margin-left: 5px;
+  margin-top: 20px;
+}
+
+.stock-price{
+  color: blue;
+}
+
+.stock-price.red{
+  color: red;
+}
+
+.stock-price.green{
+  color: green;
 }

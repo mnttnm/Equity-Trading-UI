@@ -8,6 +8,7 @@ const TransactionCart = ({onTransactionStatusChanged}) => {
     transactionInitiated,
     setTransactionInitiated,
     transactionInfo,
+    setTransactionInfo,
     resetTransactionInfo
   } = useContext(TransactionContext);
 
@@ -18,7 +19,6 @@ const TransactionCart = ({onTransactionStatusChanged}) => {
         `input[name='${script.id}']`
       );
       console.log("script: ", script.id, "units: ", currentEntry.value);
-      console.log('######', transactionInfo);
       if(transactionInfo.type === TRANSACTION_TYPE.BUY) {
         const status = await buyStock(12345, script.id, currentEntry.value);
         if(status.success){
@@ -55,12 +55,27 @@ const TransactionCart = ({onTransactionStatusChanged}) => {
     setTransactionInitiated(false);
   };
 
+  const handleStockRemoval = (e)=>{
+    console.log(e.target.value);
+    if(transactionInfo.entities.length > 0) {
+      let updatedArray =  transactionInfo.entities.filter((entity) => {
+        return e.target.value !== entity.id;
+      })
+      if(updatedArray.length === 0){
+        // hide the cart
+        setTransactionInitiated(false);
+        resetTransactionInfo();
+      }
+      setTransactionInfo({...transactionInfo, entities:updatedArray});
+    }
+  }
+
   return transactionInitiated ? (
     <div id="transcation-box">
       {transactionInfo.entities &&
         transactionInfo.entities.map(entity => {
           return (
-            <div className="details">
+            <div className="details" key={entity.id}>
               <span className={`badge ${entity.type} tag`}>
                 {entity.type.toUpperCase().substring(0, 1)}
               </span>
@@ -73,7 +88,7 @@ const TransactionCart = ({onTransactionStatusChanged}) => {
                 placeholder="enter units" 
               ></input>
               <span>
-                <button>X</button>
+                <button onClick={(e)=>{handleStockRemoval(e);}} value={entity.id}>X</button>
               </span>
             </div>
           );

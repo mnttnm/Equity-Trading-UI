@@ -1,5 +1,5 @@
 async function makeApiCall(path, body, method) {
-  const url = `${process.env.REACT_APP_SETU_TEST_API_URL}${path}?doNotFail=true`;
+  const url = `${process.env.REACT_APP_SETU_TEST_API_URL}${path}`;
   const options = {
     mode: 'cors',
     method,
@@ -48,15 +48,15 @@ export async function getStocks(forceUpdate = false) {
   } else {
     const res = await makeApiCall(`/stocks`);
     if (!res.success) {
-      return [];
+      return res;
     } else {
       window.localStorage.setItem(STOCK_LIST, JSON.stringify(res.data));
-      return res.data;
+      return res;
     }
   }
 }
 
-export async function getUserPortfolio({userID}, forceUpdate = false) {
+export async function getUserPortfolio(userID , forceUpdate = false) {
   const portfolioFromLocalStorage = window.localStorage.getItem(USER_PORTFOLIO);
   if(portfolioFromLocalStorage && !forceUpdate) {
     return JSON.parse(portfolioFromLocalStorage);
@@ -64,7 +64,9 @@ export async function getUserPortfolio({userID}, forceUpdate = false) {
     const res = await makeApiCall(`/${userID}/portfolio`);
     if (res.success) {
       window.localStorage.setItem(USER_PORTFOLIO, JSON.stringify(res.data));
-      return res.data;
+      return res;
+    } else {
+      return res;
     }
   }
 }
