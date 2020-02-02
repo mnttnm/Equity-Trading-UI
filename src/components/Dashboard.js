@@ -1,46 +1,32 @@
 import React, { useState, useContext, useEffect, useCallback } from "react";
-import { TransactionContextProvider } from "../context/TransactionContext";
+import {
+  AppBar,
+  Tabs,
+  Tab,
+  Container,
+  Grid,
+  makeStyles
+} from "@material-ui/core";
+import { useSnackbar } from "notistack";
 import {
   TRANSACTION_STATUS,
   STOCKLIST_STATE,
   STOCKLIST_STATUS,
   PORTFOLIO_STATE
 } from "../constants";
-import AppBar from "@material-ui/core/AppBar";
-import Tabs from "@material-ui/core/Tabs";
-import Tab from "@material-ui/core/Tab";
-import Typography from "@material-ui/core/Typography";
-import Box from "@material-ui/core/Box";
-import { Container, Grid, makeStyles } from "@material-ui/core";
-import { useSnackbar } from "notistack";
+import UserSessionContext from "../context/UserSessionContext";
+import { TransactionContextProvider } from "../context/TransactionContext";
 import Portfolio from "./Portfolio";
 import StockList from "./StockList";
 import TransactionCart from "./TransactionCart";
-import UserSessionContext from "../context/UserSessionContext";
-
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <Typography
-      component="div"
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box p={3}>{children}</Box>}
-    </Typography>
-  );
-}
+import TabPanel from "./TabPanel";
 
 const DashBoard = ({
   userAuthID,
   stockRefreshFrequency,
   disableTimer,
   onStockListUpdate,
-  onTransactionStatusChanged
+  onTransaction
 }) => {
   const [isPortfolioChanged, setIsPortfolioChanged] = useState(false);
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
@@ -50,7 +36,7 @@ const DashBoard = ({
     updateUserID(userAuthID);
   }, [userAuthID, updateUserID]);
 
-  function onStockListChange(state, status) {
+  const onStockListChange = (state, status) => {
     onStockListUpdate(state, status);
     switch (state) {
       case STOCKLIST_STATE.STALE:
@@ -79,16 +65,16 @@ const DashBoard = ({
         console.log("Stocklist state: ", state, ", Status: ", status);
         break;
     }
-  }
+  };
 
-  function onTransaction(status) {
+  const onTransactionUpdate = status => {
     switch (status) {
       case TRANSACTION_STATUS.FAILED:
         enqueueSnackbar("Transaction Failed, Try Again!", { variant: "error" });
         break;
       case TRANSACTION_STATUS.SUCCESSFUL:
         setIsPortfolioChanged(true);
-        onTransactionStatusChanged(status);
+        onTransaction(status);
         enqueueSnackbar("Transaction Successful", { variant: "success" });
         break;
       case TRANSACTION_STATUS.IN_PROGRESS:
@@ -97,24 +83,16 @@ const DashBoard = ({
       default:
         console.log("Transaction status: ", status);
     }
-  }
+  };
 
   const onPortfolioUpdate = useCallback(status => {
     switch (status) {
       case PORTFOLIO_STATE.LOADING:
-        // setIsPortfolioChanged(false);
         break;
       default:
-        console.log("portfolio udpate: ", status);
+        console.log("portfolio update: ", status);
     }
   }, []);
-
-  function a11yProps(index) {
-    return {
-      id: `simple-tab-${index}`,
-      "aria-controls": `simple-tabpanel-${index}`
-    };
-  }
 
   const useStyles = makeStyles(theme => ({
     root: {
@@ -124,49 +102,54 @@ const DashBoard = ({
   }));
 
   const classes = useStyles();
-  const [value, setValue] = React.useState(0);
 
+  // Helper logic for tab panel implementation
+  const [value, setValue] = React.useState(0);
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
+  const a11yProps = index => {
+    return {
+      id: `simple-tab-${index}`,
+      "aria-controls": `simple-tabpanel-${index}`
+    };
+  };
 
   return (
-    <Container maxWidth="lg">
-      <div className={classes.root}>
-        <AppBar position="static">
-          <Grid container justify="center">
-            <Tabs
-              value={value}
-              onChange={handleChange}
-              aria-label="Dashboard Section"
-            >
-              <Tab label="Marketwatch" {...a11yProps(0)} />
-              <Tab label="Portfolio" {...a11yProps(1)} />
-            </Tabs>
-          </Grid>
-        </AppBar>
+    <Container maxWidth="lg" className={classes.root}>
+      <AppBar position="static">
+        <Grid container justify="center">
+          <Tabs
+            value={value}
+            onChange={handleChange}
+            aria-label="Dashboard Section"
+          >
+            <Tab label="Marketwatch" {...a11yProps(0)} />
+            <Tab label="Portfolio" {...a11yProps(1)} />
+          </Tabs>
+        </Grid>
+      </AppBar>
 
-        <TransactionContextProvider>
-          <Grid container justify="center">
-            <TabPanel value={value} index={0}>
-              <StockList
-                onStockListUpdate={onStockListChange}
-                refreshFrequency={stockRefreshFrequency}
-                disableTimer={disableTimer}
-              />
-            </TabPanel>
-            <TabPanel value={value} index={1}>
-              <Portfolio
-                userID={userID}
-                isPortfolioChanged={isPortfolioChanged}
-                onPortfolioUpdate={onPortfolioUpdate}
-              />
-            </TabPanel>
+      <TransactionContextProvider>
+        <Grid container justify="center">
+          <TabPanel value={value} index={0}>
+            <StockList
+              refreshFrequency={stockRefreshFrequency}
+              disableTimer={disableTimer}
+              onStockListUpdate={onStockListChange}
+            />
+          </TabPanel>
+          <TabPanel value={value} index={1}>
+            <Portfolio
+              userID={userID}
+              isPortfolioChanged={isPortfolioChanged}
+              onPortfolioUpdate={onPortfolioUpdate}
+            />
+          </TabPanel>
 
-            <TransactionCart onTransactionStatusChanged={onTransaction} />
-          </Grid>
-        </TransactionContextProvider>
-      </div>
+          <TransactionCart onTransaction={onTransactionUpdate} />
+        </Grid>
+      </TransactionContextProvider>
     </Container>
   );
 };

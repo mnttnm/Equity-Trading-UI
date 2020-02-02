@@ -1,51 +1,64 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { CircularProgress, Button } from "@material-ui/core";
+import { getUserPortfolio } from "../api/api";
+import { STOCK_ENTRY_TYPE, PORTFOLIO_STATE } from "../constants";
 import Stock from "../components/Stock";
 import UserBook from "../components/UserBook";
-import { STOCK_ENTRY_TYPE, PORTFOLIO_STATE } from "../constants";
-import { getUserPortfolio } from "../api/api";
-import { Button } from "@material-ui/core";
-import { CircularProgress } from '@material-ui/core';
 
+/* Portfolio Components
+   Contains information about available cash with users
+   and stocks in user's portfolio
+*/
 const Portfolio = ({ isPortfolioChanged, userID, onPortfolioUpdate }) => {
   const [userPortfolio, setUserPortfolio] = useState();
-  const [portfolioState, setPorfolioState] = useState(PORTFOLIO_STATE.UNINITIALIZED)
+  const [portfolioState, setPortfolioState] = useState(
+    PORTFOLIO_STATE.UNINITIALIZED
+  );
 
   const getPortfolioFn = useCallback(async () => {
-    setPorfolioState(PORTFOLIO_STATE.LOADING)
+    setPortfolioState(PORTFOLIO_STATE.LOADING);
     const res = await getUserPortfolio(userID, true);
     if (res.success) {
-      setPorfolioState(PORTFOLIO_STATE.UPDATED);
+      setPortfolioState(PORTFOLIO_STATE.UPDATED);
       onPortfolioUpdate(PORTFOLIO_STATE.UPDATED);
       setUserPortfolio(res.data);
-    } else if(userPortfolio){
-      setPorfolioState(PORTFOLIO_STATE.STALE);
+    } else if (userPortfolio) {
+      setPortfolioState(PORTFOLIO_STATE.STALE);
     } else {
-      setPorfolioState(PORTFOLIO_STATE.UNINITIALIZED);
+      setPortfolioState(PORTFOLIO_STATE.UNINITIALIZED);
     }
   }, [userID]);
 
   useEffect(() => {
-      getPortfolioFn();
+    getPortfolioFn();
   }, [isPortfolioChanged, getPortfolioFn]);
 
-  function updatePortfolio() {
+  const updatePortfolio = () => {
     getPortfolioFn();
   }
 
   const shares = userPortfolio && userPortfolio.buys ? userPortfolio.buys : [];
-  switch(portfolioState){
+  switch (portfolioState) {
     case PORTFOLIO_STATE.UNINITIALIZED:
-      return (<div>
-        <span>Portfolio details not updated properly</span>
-        <Button variant="contained" color="primary" onClick={updatePortfolio}>Update</Button>
-        </div>);
+      return (
+        <div>
+          <span>Portfolio details not updated properly</span>
+          <Button variant="contained" color="primary" onClick={updatePortfolio}>
+            Update
+          </Button>
+        </div>
+      );
     case PORTFOLIO_STATE.LOADING:
-      return <CircularProgress/>;
+      return <CircularProgress />;
     case PORTFOLIO_STATE.STALE:
-      return (<div>
-      <span>Portfolio details not updated properly</span>
-      <Button variant="contained" color="primary" onClick={updatePortfolio}>Update</Button>
-      </div>);
+      return (
+        <div>
+          <span>Portfolio details not updated properly</span>
+          <Button variant="contained" color="primary" onClick={updatePortfolio}>
+            Update
+          </Button>
+        </div>
+      );
     case PORTFOLIO_STATE.UPDATED:
       return (
         <>

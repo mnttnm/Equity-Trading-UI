@@ -2,7 +2,11 @@ import React, { useState } from "react";
 import { Button, Grid, Container, Box } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 
-const RefreshTab = ({ onRefreshIntervalChanged, onTimerStateChange, stockRefreshFrequency}) => {
+const RefreshTab = ({
+  onRefreshIntervalChanged,
+  onTimerStateChange,
+  stockRefreshFrequency
+}) => {
   const [refreshInterval, setRefreshInterval] = useState(stockRefreshFrequency);
   const [timerState, setTimerState] = useState(false);
 
@@ -39,15 +43,20 @@ const RefreshTab = ({ onRefreshIntervalChanged, onTimerStateChange, stockRefresh
             {timerState ? "Start Live Update " : "Stop Live Update! "}
           </Button>
         </Grid>
-        {timerState ? (
-          <span style={{ color: "red" }}> Live fetch has stopped! </span>
-        ) : (
-          <></>
-        )}
+        {timerState && <span style={{ color: "red" }}> Live fetch has stopped! </span>}
         <Grid item>
-          <Grid container justify="space-around" spacing={1} alignItems="center">
-            <Box fontSize={18} fontWeight="800" marginRight={1}>Live update Interval</Box>
-            <Box padding={1} bgcolor="#3f51b5" color="white" borderRadius={5}>{refreshInterval}s</Box>
+          <Grid
+            container
+            justify="space-around"
+            spacing={1}
+            alignItems="center"
+          >
+            <Box fontSize={18} fontWeight="800" marginRight={1}>
+              Live update Interval
+            </Box>
+            <Box padding={1} bgcolor="#3f51b5" color="white" borderRadius={5}>
+              {refreshInterval}s
+            </Box>
           </Grid>
         </Grid>
         <Grid item>

@@ -19,7 +19,7 @@ const stockListReducer = (state, action) => {
         status: STOCKLIST_STATUS.FETCH_SUCCESSFUL
       };
     case "RESET_STOCK_LISt":
-      break;
+      return {...initialState};
     case "FETCH_STOCKS":
       return {
         ...state,

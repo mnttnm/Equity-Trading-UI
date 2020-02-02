@@ -1,11 +1,16 @@
 import React, { useEffect, useContext, useCallback, useRef, useState } from "react";
-import Stock from "../components/Stock";
+import { CircularProgress, Container} from '@material-ui/core';
+import Alert from '@material-ui/lab/Alert';
 import { getStocks } from "../api/api";
 import { STOCK_ENTRY_TYPE, STOCKLIST_STATE, STOCKLIST_STATUS} from "../constants";
 import StockExchangeContext from "../context/StockExchangeContext";
-import { CircularProgress, Container} from '@material-ui/core';
-import Alert from '@material-ui/lab/Alert';
+import Stock from "../components/Stock";
 
+/*
+  StockList Component
+  Responsible for showing up list of the stocks
+  Stocklist gets update at the frequency which gets provided externally
+*/
 const StockList = ({ refreshFrequency, disableTimer, onStockListUpdate }) => {
   const {stockListInfo, dispatch } = useContext(StockExchangeContext);
   const [stockListState, setStockListState] = useState(STOCKLIST_STATE.LOADING);

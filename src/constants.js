@@ -44,3 +44,8 @@ export const PORTFOLIO_STATE = {
   UPDATED:"updated",
   STALE: "stale"
 }
+
+export const LOCAL_STORAGE_KEYS = { 
+  STOCK_LIST: "stock_list",
+  USER_PORTFOLIO: "user_portfolio"
+}

@@ -1,14 +1,24 @@
 import React, { useContext } from "react";
-import { makeStyles } from "@material-ui/core/styles";
-import TransactionContext from "../context/TransactionContext";
-import UserSessionContext from '../context/UserSessionContext';
-import { buyStock, sellStock } from "../api/api";
-import { TRANSACTION_TYPE, TRANSACTION_STATUS } from "../constants";
-import { Button, Box, Paper, TextField, Grid } from "@material-ui/core";
-import IconButton from "@material-ui/core/IconButton";
+import {
+  IconButton,
+  Button,
+  Box,
+  Paper,
+  TextField,
+  Grid,
+  makeStyles
+} from "@material-ui/core";
 import CloseIcon from "@material-ui/icons/Close";
+import { buyStock, sellStock } from "../api/api";
+import TransactionContext from "../context/TransactionContext";
+import UserSessionContext from "../context/UserSessionContext";
+import { TRANSACTION_TYPE, TRANSACTION_STATUS } from "../constants";
 
-const TransactionCart = ({ onTransactionStatusChanged }) => {
+/* TransactionCart component
+   Provide support to place order for multiple stocks
+   At a time only Buy or Sell orders are allowed
+*/
+const TransactionCart = ({ onTransaction }) => {
   const {
     transactionInitiated,
     setTransactionInitiated,
@@ -17,27 +27,28 @@ const TransactionCart = ({ onTransactionStatusChanged }) => {
     resetTransactionInfo
   } = useContext(TransactionContext);
 
-  const {userID} = useContext(UserSessionContext);
+  const { userID } = useContext(UserSessionContext);
 
+  /* Process all the entries that are there in transaction cart */
   const executeOrder = () => {
-    onTransactionStatusChanged(TRANSACTION_STATUS.IN_PROGRESS);
-    transactionInfo.entities.forEach(async script => {
-      console.log("script: ", script.id, "units: ", script.value);
+    onTransaction(TRANSACTION_STATUS.IN_PROGRESS);
+    transactionInfo.entities.forEach(async stock => {
+      console.log("stock: ", stock.id, "units: ", stock.value);
       if (transactionInfo.type === TRANSACTION_TYPE.BUY) {
-        const status = await buyStock(userID, script.id, script.units);
+        const status = await buyStock(userID, stock.id, stock.units);
         if (status.success) {
-          onTransactionStatusChanged(TRANSACTION_STATUS.SUCCESSFUL);
-          handleStockRemoval(script.id);
+          onTransaction(TRANSACTION_STATUS.SUCCESSFUL);
+          handleStockRemoval(stock.id);
         } else {
-          onTransactionStatusChanged(TRANSACTION_STATUS.FAILED);
+          onTransaction(TRANSACTION_STATUS.FAILED);
         }
       } else {
-        const status = await sellStock(userID, script.id, script.units);
+        const status = await sellStock(userID, stock.id, stock.units);
         if (status.success) {
-          onTransactionStatusChanged(TRANSACTION_STATUS.SUCCESSFUL);
-          handleStockRemoval(script.id);
+          onTransaction(TRANSACTION_STATUS.SUCCESSFUL);
+          handleStockRemoval(stock.id);
         } else {
-          onTransactionStatusChanged(TRANSACTION_STATUS.FAILED);
+          onTransaction(TRANSACTION_STATUS.FAILED);
         }
       }
     });
@@ -63,8 +74,8 @@ const TransactionCart = ({ onTransactionStatusChanged }) => {
     }
   };
 
-  function onUnitChange(e) {
-    // update the unit value of script in the transaction cart
+  const onUnitChange = e => {
+    // update the unit value of stock in the transaction cart
     if (transactionInfo.entities.length > 0) {
       const entityId = transactionInfo.entities.findIndex(
         ({ id }) => id === e.target.name
@@ -83,7 +94,7 @@ const TransactionCart = ({ onTransactionStatusChanged }) => {
     } else {
       // throw some error
     }
-  }
+  };
 
   const useStyles = makeStyles(theme => ({
     margin: {
@@ -91,16 +102,16 @@ const TransactionCart = ({ onTransactionStatusChanged }) => {
     },
     cart_entry: {
       minWidth: 60,
-      textAlign:"center",
+      textAlign: "center",
       marginRight: 5
     },
-    cart_header:{
+    cart_header: {
       padding: 10,
-      fontWeight:"bold",
+      fontWeight: "bold",
       borderTopLeftRadius: 3,
-      borderTopRightRadius: 3,
+      borderTopRightRadius: 3
     },
-    cart_container:{
+    cart_container: {
       margin: 5
     }
   }));
@@ -108,12 +119,24 @@ const TransactionCart = ({ onTransactionStatusChanged }) => {
   const classes = useStyles();
 
   return transactionInitiated ? (
-    <Paper id="transcation-box">
-      <Box className={classes.cart_header} bgcolor={transactionInfo.type === "buy"? "blue": "red"} color="white">{transactionInfo.type.toUpperCase()}</Box>
+    <Paper id="transaction-box">
+      <Box
+        className={classes.cart_header}
+        bgcolor={transactionInfo.type === "buy" ? "blue" : "red"}
+        color="white"
+      >
+        {transactionInfo.type.toUpperCase()}
+      </Box>
       {transactionInfo.entities &&
         transactionInfo.entities.map(entity => {
           return (
-            <Grid className={classes.cart_container} container direction="row" key={entity.id} spacing={2}>
+            <Grid
+              className={classes.cart_container}
+              container
+              direction="row"
+              key={entity.id}
+              spacing={2}
+            >
               <Grid item>
                 <Grid container alignItems="center">
                   <Grid item className={classes.cart_entry}>

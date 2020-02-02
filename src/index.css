@@ -45,36 +45,11 @@ td.stock-id {
   background-color: rgb(201, 61, 19);
 }
 
-#transcation-box{
-  /* width: 300px; */
+#transaction-box{
   position: fixed;
   bottom: 10px;
   right: 10px;
-  /* border: 1px solid black; */
   border-radius: 2px;
-}
-
-.order-execution-box {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-}
-
-.refresh-tab{
-  display: flex;
-  justify-content: space-around;
-}
-
-.refresh-interval-btn:focus{
-  background-color: blue;
-}
-
-.refresh-interval-value {
-  width:fit-content;
-  border: 1px solid black;
-  padding: 0 5px;
-  margin-left: 5px;
-  margin-top: 20px;
 }
 
 .stock-price{
@@ -87,10 +62,4 @@ td.stock-id {
 
 .stock-price.green{
   color: green;
-}
-
-.timer-controls {
-  display: flex;
-  margin: 10px;
-  justify-content: space-evenly;
 }

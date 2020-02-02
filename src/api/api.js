@@ -1,16 +1,15 @@
-const STOCK_LIST = "stock_list";
-const USER_PORTFOLIO = "user_portfolio";
+import { LOCAL_STORAGE_KEYS } from "../constants";
 
 async function makeApiCall(path, body, method) {
   const url = `${process.env.REACT_APP_SETU_TEST_API_URL}${path}`;
   const options = {
-    mode: 'cors',
+    mode: "cors",
     method,
     body: body && JSON.stringify(body),
     headers: {
-       Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    }
   };
   try {
     const data = await fetch(url, options).catch(error => {
@@ -24,48 +23,56 @@ async function makeApiCall(path, body, method) {
     if (res.statusCode >= 400) {
       throw res.message;
     }
-    console.log("API response: ", res.data);
     res.success = true;
     return res;
   } catch (error) {
-    console.error("API Failure: ", error);
     return {
       success: false,
-      message: error,
+      message: error
     };
   }
 }
 
 export async function getStocks(forceUpdate = false) {
-  const stocksFromLocalStorage = window.localStorage.getItem(STOCK_LIST);
-  let response = {data:[], success: false, fromLocalStorage: false};
-  if(stocksFromLocalStorage && !forceUpdate){
+  const stocksFromLocalStorage = window.localStorage.getItem(
+    LOCAL_STORAGE_KEYS.STOCK_LIST
+  );
+  let response = { data: [], success: false, fromLocalStorage: false };
+  if (stocksFromLocalStorage && !forceUpdate) {
     response.data = JSON.parse(stocksFromLocalStorage);
     response.fromLocalStorage = true;
     response.success = true;
   } else {
     const res = await makeApiCall(`/stocks`);
     if (!res.success) {
-      response = {...response, ...res};
+      response = { ...response, ...res };
     } else {
-      window.localStorage.setItem(STOCK_LIST, JSON.stringify(res.data));
-      response = {...response, ...res, fromLocalStorage: false};
+      window.localStorage.setItem(
+        LOCAL_STORAGE_KEYS.STOCK_LIST,
+        JSON.stringify(res.data)
+      );
+      response = { ...response, ...res, fromLocalStorage: false };
     }
   }
   return response;
 }
 
-export async function getUserPortfolio(userID , forceUpdate = false) {
-  const portfolioFromLocalStorage = window.localStorage.getItem(USER_PORTFOLIO);
-  if(portfolioFromLocalStorage && !forceUpdate) {
+export async function getUserPortfolio(userID, forceUpdate = false) {
+  const portfolioFromLocalStorage = window.localStorage.getItem(
+    LOCAL_STORAGE_KEYS.USER_PORTFOLIO
+  );
+  if (portfolioFromLocalStorage && !forceUpdate) {
     return {
       data: JSON.parse(portfolioFromLocalStorage),
       success: true
-    }
+    };
   } else {
     const res = await makeApiCall(`/${userID}/portfolio`);
     if (res.success) {
-      window.localStorage.setItem(USER_PORTFOLIO, JSON.stringify(res.data));
+      window.localStorage.setItem(
+        LOCAL_STORAGE_KEYS.STOCK_LIST,
+        JSON.stringify(res.data)
+      );
       return res;
     } else {
       return res;
@@ -73,22 +80,22 @@ export async function getUserPortfolio(userID , forceUpdate = false) {
   }
 }
 
-export async function buyStock(userID, stockID, unitsToBuy){
+export async function buyStock(userID, stockID, unitsToBuy) {
   const orderDetails = {
-		"stockId" : `${stockID}`,
-		"unitsToBuy" : `${unitsToBuy}`
-	}
+    stockId: `${stockID}`,
+    unitsToBuy: `${unitsToBuy}`
+  };
 
-  const res = await makeApiCall(`/${userID}/buy`, orderDetails, 'POST');
+  const res = await makeApiCall(`/${userID}/buy`, orderDetails, "POST");
   return res;
 }
 
-export async function sellStock(userID, stockID, unitsToSell){
+export async function sellStock(userID, stockID, unitsToSell) {
   const orderDetails = {
-		"stockId" : `${stockID}`,
-		"unitsToSell" : `${unitsToSell}`
-	}
+    stockId: `${stockID}`,
+    unitsToSell: `${unitsToSell}`
+  };
 
-  const res = await makeApiCall(`/${userID}/sell`, orderDetails, 'POST');
+  const res = await makeApiCall(`/${userID}/sell`, orderDetails, "POST");
   return res;
 }

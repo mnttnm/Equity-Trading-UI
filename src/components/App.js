@@ -5,13 +5,25 @@ import { StockExchangeContextProvider } from "../context/StockExchangeContext";
 import { UserSessionContextProvider } from "../context/UserSessionContext";
 import Dashboard from "./Dashboard";
 
-export function App({
+/* Enable/Disable debug logging
+   Default: disabled
+*/
+let DEBUG = false;
+if(!DEBUG){
+  if(!window.console) window.console = {};
+  let methods = ["log", "debug", "warn", "info"];
+  for(let i=0;i<methods.length;i++){
+      console[methods[i]] = function(){};
+  }
+}
+
+const App = ({
+  userID,
   stockRefreshFrequency,
   disableTimer,
-  userID,
   onStockListUpdate,
-  onTransactionUpdate
-}) {
+  onTransaction
+}) => {
   return (
     <>
       <SnackbarProvider>
@@ -23,7 +35,7 @@ export function App({
                 userAuthID={userID}
                 stockRefreshFrequency={stockRefreshFrequency}
                 disableTimer={disableTimer}
-                onTransactionStatusChanged={onTransactionUpdate}
+                onTransaction={onTransaction}
                 onStockListUpdate={onStockListUpdate}
               />
             </StockExchangeContextProvider>
@@ -33,3 +45,5 @@ export function App({
     </>
   );
 }
+
+export default App;

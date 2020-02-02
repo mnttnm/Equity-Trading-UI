@@ -1,17 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
+/*
+  Context associated with TransactionCart component
+*/
 const TransactionContext = React.createContext();
+const initialState = {
+  entities: [],
+  type: ""
+};
 
 export const TransactionContextProvider = ({ children }) => {
-  const initialState = {
-    entities: [],
-    type: "",
-  };
-
   const [transactionInitiated, setTransactionInitiated] = useState(false);
   const [transactionInfo, setTransactionInfo] = useState(initialState);
 
-  function onTransaction(type, stock) {
+  const onTransaction = (type, stock) => {
     console.log("Transaction type: ", type);
     if (transactionInfo.entities.length > 0) {
       if (transactionInfo.type !== type) {
@@ -56,20 +58,29 @@ export const TransactionContextProvider = ({ children }) => {
       let updatedTransactionInfo = {};
       updatedTransactionInfo["entities"] = [
         ...transactionInfo.entities,
-        { id: stock.id, type: type, units: 0}
+        { id: stock.id, type: type, units: 0 }
       ];
       updatedTransactionInfo["type"] = type;
       setTransactionInfo(updatedTransactionInfo);
     }
     setTransactionInitiated(true);
-  }
+  };
 
-  function resetTransactionInfo() {
+  const resetTransactionInfo = () => {
     setTransactionInfo(initialState);
-  }
+  };
 
   return (
-    <TransactionContext.Provider value={{ transactionInitiated, transactionInfo, setTransactionInitiated, setTransactionInfo, onTransaction, resetTransactionInfo }}>
+    <TransactionContext.Provider
+      value={{
+        transactionInitiated,
+        setTransactionInitiated,
+        transactionInfo,
+        setTransactionInfo,
+        onTransaction,
+        resetTransactionInfo
+      }}
+    >
       {children}
     </TransactionContext.Provider>
   );

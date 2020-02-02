@@ -18,5 +18,4 @@ export const UserSessionContextProvider = ({ children }) => {
   );
 };
 
-
 export default UserSessionContext;
