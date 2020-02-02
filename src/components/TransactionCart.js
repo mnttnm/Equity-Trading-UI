@@ -1,9 +1,14 @@
 import React, { useContext } from "react";
+import { makeStyles } from "@material-ui/core/styles";
 import TransactionContext from "../context/TransactionContext";
-import {buyStock, sellStock} from '../api/api';
-import {TRANSACTION_TYPE, TRANSACTION_STATUS} from '../constants';
+import UserSessionContext from '../context/UserSessionContext';
+import { buyStock, sellStock } from "../api/api";
+import { TRANSACTION_TYPE, TRANSACTION_STATUS } from "../constants";
+import { Button, Box, Paper, TextField, Grid } from "@material-ui/core";
+import IconButton from "@material-ui/core/IconButton";
+import CloseIcon from "@material-ui/icons/Close";
 
-const TransactionCart = ({onTransactionStatusChanged}) => {
+const TransactionCart = ({ onTransactionStatusChanged }) => {
   const {
     transactionInitiated,
     setTransactionInitiated,
@@ -12,41 +17,30 @@ const TransactionCart = ({onTransactionStatusChanged}) => {
     resetTransactionInfo
   } = useContext(TransactionContext);
 
+  const {userID} = useContext(UserSessionContext);
+
   const executeOrder = () => {
     onTransactionStatusChanged(TRANSACTION_STATUS.IN_PROGRESS);
-    transactionInfo.entities.forEach(async (script) => {
-      const currentEntry = document.querySelector(
-        `input[name='${script.id}']`
-      );
-      console.log("script: ", script.id, "units: ", currentEntry.value);
-      if(transactionInfo.type === TRANSACTION_TYPE.BUY) {
-        const status = await buyStock(12345, script.id, currentEntry.value);
-        if(status.success){
-          console.log(`transaction successful`);
+    transactionInfo.entities.forEach(async script => {
+      console.log("script: ", script.id, "units: ", script.value);
+      if (transactionInfo.type === TRANSACTION_TYPE.BUY) {
+        const status = await buyStock(userID, script.id, script.units);
+        if (status.success) {
           onTransactionStatusChanged(TRANSACTION_STATUS.SUCCESSFUL);
-          //notify and update the portfolio, cash-balance
+          handleStockRemoval(script.id);
         } else {
-          // Notify
           onTransactionStatusChanged(TRANSACTION_STATUS.FAILED);
-          console.log(`transaction failed: `, status.message);
         }
-      }
-      else {
-        const status = await sellStock(12345, script.id, currentEntry.value);
-        if(status.success){
-          //notify and update the portfolio, cash-balance
-          console.log(`transaction successful`);
+      } else {
+        const status = await sellStock(userID, script.id, script.units);
+        if (status.success) {
           onTransactionStatusChanged(TRANSACTION_STATUS.SUCCESSFUL);
+          handleStockRemoval(script.id);
         } else {
-          // Notify
-          console.log(`transaction failed: `, status.message);
           onTransactionStatusChanged(TRANSACTION_STATUS.FAILED);
         }
       }
     });
-
-    //create some global context which will publish/listen to the transaction
-    //execution evnet and act on it.
   };
 
   const cancelOrder = () => {
@@ -55,53 +49,125 @@ const TransactionCart = ({onTransactionStatusChanged}) => {
     setTransactionInitiated(false);
   };
 
-  const handleStockRemoval = (e)=>{
-    console.log(e.target.value);
-    if(transactionInfo.entities.length > 0) {
-      let updatedArray =  transactionInfo.entities.filter((entity) => {
-        return e.target.value !== entity.id;
-      })
-      if(updatedArray.length === 0){
+  const handleStockRemoval = value => {
+    if (transactionInfo.entities.length > 0) {
+      let updatedArray = transactionInfo.entities.filter(entity => {
+        return value !== entity.id;
+      });
+      if (updatedArray.length === 0) {
         // hide the cart
         setTransactionInitiated(false);
         resetTransactionInfo();
       }
-      setTransactionInfo({...transactionInfo, entities:updatedArray});
+      setTransactionInfo({ ...transactionInfo, entities: updatedArray });
+    }
+  };
+
+  function onUnitChange(e) {
+    // update the unit value of script in the transaction cart
+    if (transactionInfo.entities.length > 0) {
+      const entityId = transactionInfo.entities.findIndex(
+        ({ id }) => id === e.target.name
+      );
+      if (entityId !== -1) {
+        let updatedArray = [...transactionInfo.entities];
+        updatedArray[entityId] = {
+          ...transactionInfo.entities[entityId],
+          units: e.target.value
+        };
+        setTransactionInfo({
+          ...transactionInfo,
+          entities: [...updatedArray]
+        });
+      }
+    } else {
+      // throw some error
     }
   }
 
+  const useStyles = makeStyles(theme => ({
+    margin: {
+      margin: theme.spacing(1)
+    },
+    cart_entry: {
+      minWidth: 60,
+      textAlign:"center",
+      marginRight: 5
+    },
+    cart_header:{
+      padding: 10,
+      fontWeight:"bold",
+      borderTopLeftRadius: 3,
+      borderTopRightRadius: 3,
+    },
+    cart_container:{
+      margin: 5
+    }
+  }));
+
+  const classes = useStyles();
+
   return transactionInitiated ? (
-    <div id="transcation-box">
+    <Paper id="transcation-box">
+      <Box className={classes.cart_header} bgcolor={transactionInfo.type === "buy"? "blue": "red"} color="white">{transactionInfo.type.toUpperCase()}</Box>
       {transactionInfo.entities &&
         transactionInfo.entities.map(entity => {
           return (
-            <div className="details" key={entity.id}>
-              <span className={`badge ${entity.type} tag`}>
-                {entity.type.toUpperCase().substring(0, 1)}
-              </span>
-              <div>
-                <strong>{entity.id}</strong>
-              </div>
-              <input
-                name={`${entity.id}`}
-                type="text"
-                placeholder="enter units" 
-              ></input>
-              <span>
-                <button onClick={(e)=>{handleStockRemoval(e);}} value={entity.id}>X</button>
-              </span>
-            </div>
+            <Grid className={classes.cart_container} container direction="row" key={entity.id} spacing={2}>
+              <Grid item>
+                <Grid container alignItems="center">
+                  <Grid item className={classes.cart_entry}>
+                    <div>
+                      <strong>{entity.id}</strong>
+                    </div>
+                  </Grid>
+                  <Grid item className={classes.cart_entry}>
+                    <TextField
+                      size="small"
+                      defaultValue="0"
+                      name={`${entity.id}`}
+                      type="number"
+                      onChange={onUnitChange}
+                    />
+                  </Grid>
+                  <Grid item>
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        handleStockRemoval(entity.id);
+                      }}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </Grid>
+                </Grid>
+              </Grid>
+            </Grid>
           );
         })}
-      <div className="order-execution-box">
-        <button className="btn execute" onClick={executeOrder}>
-          Place Order
-        </button>
-        <button className="btn cancel" onClick={cancelOrder}>
-          Cancel Order
-        </button>
-      </div>
-    </div>
+      <Box>
+        <Grid container justify="flex-end">
+          <Button
+            variant="contained"
+            size="small"
+            color="primary"
+            onClick={executeOrder}
+            className={classes.margin}
+          >
+            Execute
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="secondary"
+            onClick={cancelOrder}
+            className={classes.margin}
+          >
+            Cancel
+          </Button>
+        </Grid>
+      </Box>
+    </Paper>
   ) : null;
 };
 

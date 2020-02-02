@@ -12,7 +12,6 @@ const initialState = {
 const stockListReducer = (state, action) => {
   switch (action.type) {
     case "UPDATE_STOCKS":
-      console.log("update");
       return {
         ...state,
         stocks: [...action.payload],

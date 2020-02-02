@@ -1,71 +1,87 @@
 import React, { useEffect, useState, useCallback } from "react";
 import Stock from "../components/Stock";
 import UserBook from "../components/UserBook";
-import { STOCK_ENTRY_TYPE } from "../constants";
+import { STOCK_ENTRY_TYPE, PORTFOLIO_STATE } from "../constants";
 import { getUserPortfolio } from "../api/api";
+import { Button } from "@material-ui/core";
+import { CircularProgress } from '@material-ui/core';
 
-const RefreshButton = ({onPressHandler})=>{
-  return (
-    <button onClick={onPressHandler}>Refresh</button>
-  )
-}
-
-const Portfolio = props => {
-  const { isPortfolioChanged, userID } = props;
-  const [userPortfolio, setUserPortfolio] = useState({});
-  const [isSuccessful, setIsSuccessful] = useState(false);
+const Portfolio = ({ isPortfolioChanged, userID, onPortfolioUpdate }) => {
+  const [userPortfolio, setUserPortfolio] = useState();
+  const [portfolioState, setPorfolioState] = useState(PORTFOLIO_STATE.UNINITIALIZED)
 
   const getPortfolioFn = useCallback(async () => {
+    setPorfolioState(PORTFOLIO_STATE.LOADING)
     const res = await getUserPortfolio(userID, true);
     if (res.success) {
+      setPorfolioState(PORTFOLIO_STATE.UPDATED);
+      onPortfolioUpdate(PORTFOLIO_STATE.UPDATED);
       setUserPortfolio(res.data);
-      setIsSuccessful(true);
+    } else if(userPortfolio){
+      setPorfolioState(PORTFOLIO_STATE.STALE);
     } else {
-      setIsSuccessful(false);
+      setPorfolioState(PORTFOLIO_STATE.UNINITIALIZED);
     }
   }, [userID]);
 
   useEffect(() => {
-    getPortfolioFn();
+      getPortfolioFn();
   }, [isPortfolioChanged, getPortfolioFn]);
 
-  function updatePortfolio(){
+  function updatePortfolio() {
     getPortfolioFn();
-  };
+  }
 
-  const shares = userPortfolio.buys ? userPortfolio.buys : [];
-
-  return isSuccessful ? (
-    <>
-    <UserBook userBalance={userPortfolio.cash} />
-    <div className="portfolio-box">
-      <h2 className="portfolio-heading">Portfolio Stocks</h2>
-      {userPortfolio.buys && userPortfolio.buys.length > 0 ?
-      <table className="table">
-        <thead>
-          <tr>
-            <th className="instrument">Instrument</th>
-            <th>Name</th>
-            <th>Units</th>
-          </tr>
-        </thead>
-        <tbody>
-          {shares.map(stockInfo => (
-            <Stock
-              key={stockInfo.id}
-              stock={stockInfo}
-              entryType={STOCK_ENTRY_TYPE.PORTFOLIO}
-            />
-          ))}
-        </tbody>
-      </table>
-      :<><span> Empty Portfolio!</span>
-       <RefreshButton onPressHandler={()=>updatePortfolio()}/>
-       </>
-      }
-    </div>
-    </>
-  ) : <div><span>Portfolio details not updated </span> <button onClick={updatePortfolio}>Click to Update</button></div>;
+  const shares = userPortfolio && userPortfolio.buys ? userPortfolio.buys : [];
+  switch(portfolioState){
+    case PORTFOLIO_STATE.UNINITIALIZED:
+      return (<div>
+        <span>Portfolio details not updated properly</span>
+        <Button variant="contained" color="primary" onClick={updatePortfolio}>Update</Button>
+        </div>);
+    case PORTFOLIO_STATE.LOADING:
+      return <CircularProgress/>;
+    case PORTFOLIO_STATE.STALE:
+      return (<div>
+      <span>Portfolio details not updated properly</span>
+      <Button variant="contained" color="primary" onClick={updatePortfolio}>Update</Button>
+      </div>);
+    case PORTFOLIO_STATE.UPDATED:
+      return (
+        <>
+          <UserBook userBalance={userPortfolio && userPortfolio.cash} />
+          <div className="portfolio-box">
+            <h2 className="portfolio-heading">Holdings</h2>
+            {shares.length > 0 ? (
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th className="instrument">Instrument</th>
+                    <th>Name</th>
+                    <th>Units</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {shares.map(stockInfo => (
+                    <Stock
+                      key={stockInfo.id}
+                      stock={stockInfo}
+                      entryType={STOCK_ENTRY_TYPE.PORTFOLIO}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <>
+                <span> You don't have any stock in your Portfolio!</span>
+              </>
+            )}
+          </div>
+        </>
+      );
+    default:
+      return null;
+  }
 };
 
 export default Portfolio;

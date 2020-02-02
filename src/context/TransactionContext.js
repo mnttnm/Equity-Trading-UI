@@ -5,7 +5,7 @@ const TransactionContext = React.createContext();
 export const TransactionContextProvider = ({ children }) => {
   const initialState = {
     entities: [],
-    type: ""
+    type: "",
   };
 
   const [transactionInitiated, setTransactionInitiated] = useState(false);
@@ -46,7 +46,7 @@ export const TransactionContextProvider = ({ children }) => {
           let updatedTransactionInfo = {};
           updatedTransactionInfo["entities"] = [
             ...transactionInfo.entities,
-            { id: stock.id, type: type }
+            { id: stock.id, type: type, units: 0 }
           ];
           updatedTransactionInfo["type"] = type;
           setTransactionInfo(updatedTransactionInfo);
@@ -56,7 +56,7 @@ export const TransactionContextProvider = ({ children }) => {
       let updatedTransactionInfo = {};
       updatedTransactionInfo["entities"] = [
         ...transactionInfo.entities,
-        { id: stock.id, type: type }
+        { id: stock.id, type: type, units: 0}
       ];
       updatedTransactionInfo["type"] = type;
       setTransactionInfo(updatedTransactionInfo);

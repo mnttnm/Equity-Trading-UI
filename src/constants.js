@@ -20,11 +20,27 @@ export const TRANSACTION_STATUS = {
 export const STOCKLIST_STATE = {
   LOADING : "loading",
   LOADED: "loaded",
-  STALE: "stale"
+  STALE: "stale",
+  UNINITIALIZED: "uninitialized"
 }
 
 export const STOCKLIST_STATUS = {
   FETCH_FAILED: "stock_list_fetch_failure",
   FETCH_SUCCESSFUL: "stock_list_fetch_successful",
+  FETCHED_LOCALLY: "local_fetch",
   UNKNOWN: "unknown"
+}
+
+export const NOTIFICATION_STATUS = {
+  SUCCESS: "success",
+  ERROR: "error",
+  WARNING: "warning",
+  DEFAULT: "default"
+}
+
+export const PORTFOLIO_STATE = {
+  UNINITIALIZED:"uninitialized",
+  LOADING:"loading",
+  UPDATED:"updated",
+  STALE: "stale"
 }

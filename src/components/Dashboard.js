@@ -1,73 +1,173 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useState, useContext, useEffect, useCallback } from "react";
+import { TransactionContextProvider } from "../context/TransactionContext";
+import {
+  TRANSACTION_STATUS,
+  STOCKLIST_STATE,
+  STOCKLIST_STATUS,
+  PORTFOLIO_STATE
+} from "../constants";
+import AppBar from "@material-ui/core/AppBar";
+import Tabs from "@material-ui/core/Tabs";
+import Tab from "@material-ui/core/Tab";
+import Typography from "@material-ui/core/Typography";
+import Box from "@material-ui/core/Box";
+import { Container, Grid, makeStyles } from "@material-ui/core";
+import { useSnackbar } from "notistack";
 import Portfolio from "./Portfolio";
 import StockList from "./StockList";
 import TransactionCart from "./TransactionCart";
-import { TransactionContextProvider } from "../context/TransactionContext";
-import StockExchangeContext from "../context/StockExchangeContext";
-import { TRANSACTION_STATUS } from "../constants";
-import RefreshTab from "./RefreshTab";
+import UserSessionContext from "../context/UserSessionContext";
 
-const DashBoard = ({userID}) => {
-  const [stockRefreshFrequency, setStockRequestFrequency] = useState(20000);
-  const [disableTimer, toggleDisableTimer] = useState(false);
-  const {stockListInfo} = useContext(StockExchangeContext);
-  const [isPortfolioChanged, setIsPortfolioChanged] = useState();
-  
-  // useEffect(() => {
-  //   (async () => {
-  //     const userInfo = await getUserPortfolio(userID);
-  //     if (userInfo) {
-  //       setUserPortfolio(userInfo);
-  //     }
-  //   })();
-  // }, [userID]);
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <Typography
+      component="div"
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box p={3}>{children}</Box>}
+    </Typography>
+  );
+}
+
+const DashBoard = ({
+  userAuthID,
+  stockRefreshFrequency,
+  disableTimer,
+  onStockListUpdate,
+  onTransactionStatusChanged
+}) => {
+  const [isPortfolioChanged, setIsPortfolioChanged] = useState(false);
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+  const { userID, updateUserID } = useContext(UserSessionContext);
 
   useEffect(() => {
-    console.log('onStockListUpdate: ', stockListInfo);
-  }, [stockListInfo]);
+    updateUserID(userAuthID);
+  }, [userAuthID, updateUserID]);
 
-  function onTransactionStatusChanged(status) {
-    console.log("Transaction status: ", status);
-    if (status === TRANSACTION_STATUS.SUCCESSFUL) {
-      setIsPortfolioChanged(true);
-      // (async () => {
-      //   const userInfo = await getUserPortfolio(userID, true);
-      //   if (userInfo) {
-      //     setUserPortfolio(userInfo);
-      //   }
-      // })();
+  function onStockListChange(state, status) {
+    onStockListUpdate(state, status);
+    switch (state) {
+      case STOCKLIST_STATE.STALE:
+        if (status === STOCKLIST_STATUS.FETCH_FAILED) {
+          enqueueSnackbar("Stocks List update failed!", { variant: "error" });
+        } else if (status === STOCKLIST_STATUS.FETCHED_LOCALLY) {
+          enqueueSnackbar("Stocks List data is not updated! ", {
+            variant: "warning"
+          });
+        }
+        break;
+      case STOCKLIST_STATE.LOADED:
+        if (status === STOCKLIST_STATUS.FETCH_SUCCESSFUL) {
+          // enqueueSnackbar("Stock List updated to latest!", {variant: 'success'});
+        }
+        break;
+      case STOCKLIST_STATE.UNINITIALIZED:
+        if (status === STOCKLIST_STATUS.FETCH_FAILED) {
+          enqueueSnackbar(
+            `Stock list update failed, Trying again after ${stockRefreshFrequency}s!`,
+            { variant: "error" }
+          );
+        }
+        break;
+      default:
+        console.log("Stocklist state: ", state, ", Status: ", status);
+        break;
     }
   }
 
-  function onRefreshIntervalChanged(interval) {
-    console.log("refresh interval changed to: ", interval);
-    setStockRequestFrequency(interval * 1000);
+  function onTransaction(status) {
+    switch (status) {
+      case TRANSACTION_STATUS.FAILED:
+        enqueueSnackbar("Transaction Failed, Try Again!", { variant: "error" });
+        break;
+      case TRANSACTION_STATUS.SUCCESSFUL:
+        setIsPortfolioChanged(true);
+        onTransactionStatusChanged(status);
+        enqueueSnackbar("Transaction Successful", { variant: "success" });
+        break;
+      case TRANSACTION_STATUS.IN_PROGRESS:
+        setIsPortfolioChanged(false);
+        break;
+      default:
+        console.log("Transaction status: ", status);
+    }
   }
 
-  function onStockListUpdate(state, status){
+  const onPortfolioUpdate = useCallback(status => {
+    switch (status) {
+      case PORTFOLIO_STATE.LOADING:
+        // setIsPortfolioChanged(false);
+        break;
+      default:
+        console.log("portfolio udpate: ", status);
+    }
+  }, []);
+
+  function a11yProps(index) {
+    return {
+      id: `simple-tab-${index}`,
+      "aria-controls": `simple-tabpanel-${index}`
+    };
   }
+
+  const useStyles = makeStyles(theme => ({
+    root: {
+      flexGrow: 1,
+      backgroundColor: theme.palette.background.paper
+    }
+  }));
+
+  const classes = useStyles();
+  const [value, setValue] = React.useState(0);
+
+  const handleChange = (event, newValue) => {
+    setValue(newValue);
+  };
 
   return (
-    <>
-      <button onClick={() => {
-          toggleDisableTimer(!disableTimer);
-        }
-        }>
-        Disable Timer
-      </button>
-      <RefreshTab onRefreshIntervalChanged={onRefreshIntervalChanged} timerDisabled={disableTimer}/>
-      <TransactionContextProvider>
-          <StockList
-            onStockListUpdate={onStockListUpdate}
-            refreshFrequency={stockRefreshFrequency}
-            disableTimer={disableTimer}
-          />
-          <Portfolio userID={userID} isPortfolioChanged={isPortfolioChanged}/>
-          <TransactionCart
-            onTransactionStatusChanged={onTransactionStatusChanged}
-          />
-      </TransactionContextProvider>
-    </>
+    <Container maxWidth="lg">
+      <div className={classes.root}>
+        <AppBar position="static">
+          <Grid container justify="center">
+            <Tabs
+              value={value}
+              onChange={handleChange}
+              aria-label="Dashboard Section"
+            >
+              <Tab label="Marketwatch" {...a11yProps(0)} />
+              <Tab label="Portfolio" {...a11yProps(1)} />
+            </Tabs>
+          </Grid>
+        </AppBar>
+
+        <TransactionContextProvider>
+          <Grid container justify="center">
+            <TabPanel value={value} index={0}>
+              <StockList
+                onStockListUpdate={onStockListChange}
+                refreshFrequency={stockRefreshFrequency}
+                disableTimer={disableTimer}
+              />
+            </TabPanel>
+            <TabPanel value={value} index={1}>
+              <Portfolio
+                userID={userID}
+                isPortfolioChanged={isPortfolioChanged}
+                onPortfolioUpdate={onPortfolioUpdate}
+              />
+            </TabPanel>
+
+            <TransactionCart onTransactionStatusChanged={onTransaction} />
+          </Grid>
+        </TransactionContextProvider>
+      </div>
+    </Container>
   );
 };
 

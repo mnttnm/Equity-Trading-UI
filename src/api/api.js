@@ -1,3 +1,6 @@
+const STOCK_LIST = "stock_list";
+const USER_PORTFOLIO = "user_portfolio";
+
 async function makeApiCall(path, body, method) {
   const url = `${process.env.REACT_APP_SETU_TEST_API_URL}${path}`;
   const options = {
@@ -25,12 +28,7 @@ async function makeApiCall(path, body, method) {
     res.success = true;
     return res;
   } catch (error) {
-    // reportError('Api', `${error || 'unknown error'} at ${path}`);
     console.error("API Failure: ", error);
-    // !toast.isActive(API_ERROR_TOAST_ID) &&
-    //   toast.error(messages.GENERIC_ERROR, {
-    //     toastId: API_ERROR_TOAST_ID,
-    //   });
     return {
       success: false,
       message: error,
@@ -38,28 +36,32 @@ async function makeApiCall(path, body, method) {
   }
 }
 
-const STOCK_LIST = "stock_list";
-const USER_PORTFOLIO = "user_portfolio";
-
 export async function getStocks(forceUpdate = false) {
   const stocksFromLocalStorage = window.localStorage.getItem(STOCK_LIST);
+  let response = {data:[], success: false, fromLocalStorage: false};
   if(stocksFromLocalStorage && !forceUpdate){
-    return JSON.parse(stocksFromLocalStorage);
+    response.data = JSON.parse(stocksFromLocalStorage);
+    response.fromLocalStorage = true;
+    response.success = true;
   } else {
     const res = await makeApiCall(`/stocks`);
     if (!res.success) {
-      return res;
+      response = {...response, ...res};
     } else {
       window.localStorage.setItem(STOCK_LIST, JSON.stringify(res.data));
-      return res;
+      response = {...response, ...res, fromLocalStorage: false};
     }
   }
+  return response;
 }
 
 export async function getUserPortfolio(userID , forceUpdate = false) {
   const portfolioFromLocalStorage = window.localStorage.getItem(USER_PORTFOLIO);
   if(portfolioFromLocalStorage && !forceUpdate) {
-    return JSON.parse(portfolioFromLocalStorage);
+    return {
+      data: JSON.parse(portfolioFromLocalStorage),
+      success: true
+    }
   } else {
     const res = await makeApiCall(`/${userID}/portfolio`);
     if (res.success) {
