@@ -1,3 +1,5 @@
+A website prototype similar to Equity trading platform.
+
 # High level Code Structure Information:
 
 ## APP Component
